@@ -1,5 +1,5 @@
 from typing import Annotated, Sequence, TypedDict
-from langchain_core.messages import BaseMessage, HumanMessage, AIMessage
+from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, SystemMessage
 from langgraph.graph import StateGraph
 
 from langgraph.graph.message import add_messages
@@ -29,10 +29,12 @@ def create_philosopher(name: str, perspective: str, llm):
 
         # Get the last message
         last_message = state["messages"][-1]
+        history = "\n".join([m.content for m in state["messages"][:-1]])
 
         # Generate response using the philosophical perspective
         response = llm.invoke([
-            HumanMessage(content=prompt),
+            SystemMessage(content=prompt),
+            SystemMessage(content=f"Dialogue history:\n{history}"),
             HumanMessage(content=f"Previous message: {last_message.content}\nYour response:")
         ])
 
@@ -81,11 +83,11 @@ compiled_graph = graph.compile()
 
 # Run the dialogue
 initial_state = {
-    "messages": [HumanMessage(content="What is the nature of moral behavior?")],
+    "messages": [HumanMessage(content="What is the future of humanity and AI powered robots?")],
     "current_speaker": "Philosopher1"
 }
 
-# Run for a few turns
+## Run for a few turns
 for _ in range(4):
     for event in compiled_graph.stream(initial_state):
         if "messages" in event:
