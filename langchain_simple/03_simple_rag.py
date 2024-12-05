@@ -52,7 +52,7 @@ from langchain_core.messages import SystemMessage, HumanMessage
 system_template = """You are an assistant for question-answering tasks. 
 Use the following pieces of retrieved context to answer the question. 
 If you don't know the answer, just say that you don't know. 
-Use three sentences maximum and keep the answer concise.
+
 Context: {context}:"""
 
 prompt_template = ChatPromptTemplate.from_messages(
@@ -60,7 +60,7 @@ prompt_template = ChatPromptTemplate.from_messages(
 )
 
 # Define a question
-question = """What is this policy about?"""
+question = """What is this policy about? What is the company?"""
 
 # Retrieve relevant documents
 docs = retriever.invoke(question)

@@ -19,13 +19,15 @@ def call_model(state: MessagesState):
 workflow.add_edge(START, "model")
 workflow.add_node("model", call_model)
 
+
 # Add memory
 memory = MemorySaver()
 app = workflow.compile(checkpointer=memory)
 
 # create a thread
 config = {"configurable": {"thread_id": "abc123"}}
-result = app.invoke({"messages": [HumanMessage(content="hi!")]}, config)
+#result = app.invoke({"messages": [HumanMessage(content="hi!")]}, config)
 
 
-print(result)
+#print(result)
+app.get_graph().draw_mermaid_png(output_file_path="simple.png")

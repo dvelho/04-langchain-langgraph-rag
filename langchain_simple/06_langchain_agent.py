@@ -44,10 +44,10 @@ class GetCurrentWeatherTool(BaseTool):
 
 #create an agent
 memory = MemorySaver()
-model = llm
+
 weather_tool = GetCurrentWeatherTool()
 tools = [weather_tool]
-agent_executor = create_react_agent(model, tools, checkpointer=memory)
+agent_executor = create_react_agent(llm, tools, checkpointer=memory)
 
 # Use the agent
 config = {"configurable": {"thread_id": "abc123"}}
@@ -58,7 +58,7 @@ for chunk in agent_executor.stream(
     print("----")
 
 for chunk in agent_executor.stream(
-    {"messages": [HumanMessage(content="whats the weather where I live in Celsius?")]}, config
+    {"messages": [HumanMessage(content="whats the weather where I live, in Celsius?")]}, config
 ):
     print(chunk)
     print("----")
