@@ -174,8 +174,7 @@ initial_state = {
 #make a mermaid graph
 compiled_graph.get_graph().draw_mermaid_png(output_file_path="philosophy_graph.png")
 ## Run for a few turns
-for _ in range(4):
-    for event in compiled_graph.stream(initial_state):
-        if "messages" in event:
-            print(f"\n{event['current_speaker']} will respond next")
-            print(event["messages"][-1].content)
+for event in compiled_graph.stream(initial_state):
+    if "messages" in event:
+        print(f"\n{event['current_speaker']} will respond next")
+        print(event["messages"][-1].content)
