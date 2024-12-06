@@ -7,12 +7,6 @@ from langgraph.graph.message import add_messages
 from models import llm_local
 
 
-# Define the state
-class DialogueState(TypedDict):
-    messages: Annotated[Sequence[BaseMessage], add_messages]
-    current_speaker: str
-
-
 # Create two different models for the philosophers
 philosopher1_llm = llm_local
 philosopher2_llm = llm_local
@@ -20,7 +14,8 @@ philosopher2_llm = llm_local
 class DialogueState(TypedDict):
     messages: Annotated[Sequence[BaseMessage], add_messages]
     current_speaker: str
-    summary: str  # New field to store dialogue summary
+    summary: str
+    last_summarized_idx: int  # New field to track last summarized message
 
 def create_summarizer(llm):
     prompt = """You are a philosophy discussion summarizer.
@@ -34,23 +29,26 @@ def create_summarizer(llm):
     ### Philosopher2 (Kantian) View:
     * [1-2 key points from their deontological perspective]
     
-    Do not add any additional philosophers or sections. Focus only on the main arguments made by these two philosophers in their discussion."""
+    Do not add any additional philosophers or sections."""
     
     def summarizer_node(state: DialogueState):
-        # Get full dialogue history
-        history = "\n".join([m.content for m in state["messages"]])
+        # Get only new messages since last summary
+        last_idx = state.get("last_summarized_idx", -1)
+        recent_messages = state["messages"][last_idx + 1:]
+        history = "\n".join([m.content for m in recent_messages])
         
         # Generate summary
         response = llm.invoke([
             SystemMessage(content=prompt),
-            HumanMessage(content=f"Dialogue history:\n{history}\nProvide a structured summary:")
+            HumanMessage(content=f"Recent dialogue history:\n{history}\nProvide a structured summary:")
         ])
         
-        print("\nSummary of discussion so far:")
+        print("\nSummary of recent discussion:")
         print(response.content)
         
-        # Keep only the last message in history after summarizing
+        # Keep only the last message and update last_summarized_idx
         last_message = state["messages"][-1]
+        current_idx = len(state["messages"]) - 1
         
         return {
             "messages": [
@@ -58,7 +56,8 @@ def create_summarizer(llm):
                 last_message
             ],
             "current_speaker": state["current_speaker"],
-            "summary": response.content
+            "summary": response.content,
+            "last_summarized_idx": current_idx  # Track the last message we summarized
         }
     
     return summarizer_node
@@ -169,12 +168,14 @@ compiled_graph = graph.compile()
 initial_state = {
     "messages": [HumanMessage(content="What is the future of humanity and AI powered robots?")],
     "current_speaker": "Philosopher1",
-    "summary": ""
+    "summary": "",
+    "last_summarized_idx": -1  # Start with no messages summarized
 }
 #make a mermaid graph
 compiled_graph.get_graph().draw_mermaid_png(output_file_path="philosophy_graph.png")
 ## Run for a few turns
-for event in compiled_graph.stream(initial_state):
+config = {"recursion_limit": 100}
+for event in compiled_graph.stream(initial_state, config=config):
     if "messages" in event:
         print(f"\n{event['current_speaker']} will respond next")
         print(event["messages"][-1].content)
